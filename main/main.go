@@ -6,6 +6,40 @@
 
 package main
 
-func main() {
+import (
+	"fmt"
+	"time"
+)
 
+// Офисный работник
+
+func worker(id int, tasks <-chan string, results chan<- string) {
+	for task := range tasks { // Ждёт задания из своего ящика
+		fmt.Printf("Работник %d: %s\n", id, task)
+		time.Sleep(time.Second) // Выполняет работу
+		results <- fmt.Sprintf("%s готово!", task) // Отправляет результат 
+	}
+}
+
+func main() {
+	// Cоздаём почтовые ящики:
+	tasks := make(chan string, 10) // Ящик с заданиями (буфер = 10)
+	results := make(chan string, 10) // Ящик для результатов
+
+	// Наняли 3 работников
+	for w := 1; w <= 3; w++ {
+		go worker(w, tasks, results)
+	}
+
+	// Отправили 5 заданий
+	for j := 1; j <= 5; j++ {
+		tasks <- fmt.Sprintf("Задание %d", j)
+	}
+	close(tasks) // Закрыли ящик заданий ("заказов больше нет")
+
+	// Получаем результаты
+	for a := 1; a <= 5; a++ {
+		result := <-results // Достаём из ящика результатов
+		fmt.Println(result)
+	}
 }
