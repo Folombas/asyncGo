@@ -3,16 +3,21 @@ package main
 import "fmt"
 
 func main() {
-	ch1 := make(chan int)
+	in := make(chan int)
 
-	go func(in chan int) {
-		val := <-in
-		fmt.Println("GO: get from chan", val)
-		fmt.Println("GO: after read from chan")
-	}(ch1)
+	go func(out chan<- int) {
+		for i := 0; i < 10; i++ {
+			fmt.Println("before", i)
+			out <- i
+			fmt.Println("after", i)
+		}
+		close(out)
+		fmt.Println("generator finish")
+	}(in)
 
-	ch1 <- 42
+	for i := range in {
+		fmt.Println("\tget", i)
+	}
 
-	fmt.Println("MAIN: after put to chan")
-	fmt.Scanln()
+	// fmt.Scanln()
 }
