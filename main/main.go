@@ -1,45 +1,18 @@
-// Что такое вообще Асинхронное программирование?
-// Асинхронное программирование - это когда операции вашей программы выполняются не строго последовательно (по порядку),
-// а могут быть прераваны какими-то другими операциями нашей же программы.
-
-// Самым известным примером Асинхронного Программирования является технология Ajax
-
 package main
 
-import (
-	"fmt"
-	"time"
-)
-
-// Офисный работник
-
-func worker(id int, tasks <-chan string, results chan<- string) {
-	for task := range tasks { // Ждёт задания из своего ящика
-		fmt.Printf("Работник %d: %s\n", id, task)
-		time.Sleep(time.Second) // Выполняет работу
-		results <- fmt.Sprintf("%s готово!", task) // Отправляет результат 
-	}
-}
+import "fmt"
 
 func main() {
-	// Cоздаём почтовые ящики:
-	tasks := make(chan string, 10) // Ящик с заданиями (буфер = 10)
-	results := make(chan string, 10) // Ящик для результатов
+	ch1 := make(chan int)
 
-	// Наняли 3 работников
-	for w := 1; w <= 3; w++ {
-		go worker(w, tasks, results)
-	}
+	go func(in chan int) {
+		val := <-in
+		fmt.Println("GO: get from chan", val)
+		fmt.Println("GO: after read from chan")
+	}(ch1)
 
-	// Отправили 5 заданий
-	for j := 1; j <= 5; j++ {
-		tasks <- fmt.Sprintf("Задание %d", j)
-	}
-	close(tasks) // Закрыли ящик заданий ("заказов больше нет")
+	ch1 <- 42
 
-	// Получаем результаты
-	for a := 1; a <= 5; a++ {
-		result := <-results // Достаём из ящика результатов
-		fmt.Println(result)
-	}
+	fmt.Println("MAIN: after put to chan")
+	fmt.Scanln()
 }
