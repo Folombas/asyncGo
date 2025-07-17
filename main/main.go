@@ -1,23 +1,18 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
-	in := make(chan int)
-
-	go func(out chan<- int) {
-		for i := 0; i < 10; i++ {
-			fmt.Println("before", i)
-			out <- i
-			fmt.Println("after", i)
-		}
-		close(out)
-		fmt.Println("generator finish")
-	}(in)
-
-	for i := range in {
-		fmt.Println("\tget", i)
+	ch1 := make(chan int)
+	ch2 := make(chan int)
+	select {
+	case val := <-ch1:
+		fmt.Println("ch1 val", val)
+	case ch2 <- 1:
+		fmt.Println("put val to ch2")
+	default:
+		fmt.Println("default case")
 	}
-
-	// fmt.Scanln()
 }
