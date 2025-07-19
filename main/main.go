@@ -1,30 +1,25 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func main() {
-	cancelCh := make(chan struct{})
-	dataCh := make(chan int)
-
-	go func(cancelCh chan struct{}, dataCh chan int) {
-		val := 0
-		for {
-			select {
-			case <-cancelCh:
-				return
-			case dataCh <- val:
-				val++
-				}
-			}
-		}(cancelCh, dataCh)
-
-		for curVal := range dataCh {
-		fmt.Println("read", curVal)
-		if curVal > 3 {
-			fmt.Println("send cancel")
-			cancelCh <- struct{}{}
+	ticker := time.NewTicker(time.Second)
+	i := 0
+	for tickTime := range ticker.C {
+		i++
+		fmt.Println("step: ", i, "time: ", tickTime)
+		if i >= 5 {
+			// надо останавливать, иначе потечёт
+			ticker.Stop()
 			break
 		}
 	}
+	fmt.Println("total", i)
+
+
+	return
 }
 
