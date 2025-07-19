@@ -1,19 +1,35 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
-func sayHello() {
-	fmt.Println("Hello, Go Programming Language!")
+func worker(ctx context.Context, workerNum int, out chan<- int) {
+	waitTime := time.Duration(rand.Intn(100)+10) * time.Millisecond
+	fmt.Println(workerNum, "sleep", waitTime)
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(waitTime):
+		fmt.Println("worker", workerNum, "done")
+		out <- workerNum
+	}
 }
 
 func main() {
-	timer := time.AfterFunc(1 * time.Second, sayHello)
+	ctx, finish := context.WithCancel(context.Background())
+	result := make(chan int, 1)
 
-	fmt.Scanln()
-	timer.Stop()
+	for i := 0; i < 10; i++ {
+		go worker(ctx, i, result)
+	}
 
-	fmt.Scanln()
+	foundBy := <-result
+	fmt.Println("result found by", foundBy)
+	finish()
+
+	time.Sleep(time.Second)
 }
