@@ -1,35 +1,29 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"math/rand"
 	"time"
 )
 
-func worker(ctx context.Context, workerNum int, out chan<- int) {
-	waitTime := time.Duration(rand.Intn(100)+10) * time.Millisecond
-	fmt.Println(workerNum, "sleep", waitTime)
-	select {
-	case <-ctx.Done():
-		return
-	case <-time.After(waitTime):
-		fmt.Println("worker", workerNum, "done")
-		out <- workerNum
-	}
+// Прикладное применение каналов и горутин
+
+func getComments() chan string {
+	// надо использовать буферизированный канал
+	result := make(chan string, 1)
+	go func(out chan<- string) {
+		time.Sleep(2 * time.Second)
+		fmt.Println("async operation ready, return comments")
+		out <- "32 комментария"
+	}(result)
+	return result
 }
 
-func main() {
-	ctx, finish := context.WithCancel(context.Background())
-	result := make(chan int, 1)
+func getPage() {
+	resultCh := getComments()
 
-	for i := 0; i < 10; i++ {
-		go worker(ctx, i, result)
-	}
+	time.Sleep(1 * time.Second)
+	fmt.Println("get related articles")
 
-	foundBy := <-result
-	fmt.Println("result found by", foundBy)
-	finish()
-
-	time.Sleep(time.Second)
+	commentsData := <-resultCh
+	fmt.Println("main goroutine: ", commentsData)
 }
