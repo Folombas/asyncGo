@@ -5,25 +5,34 @@ import (
 	"time"
 )
 
-// Прикладное применение каналов и горутин
-
-func getComments() chan string {
-	// надо использовать буферизированный канал
-	result := make(chan string, 1)
-	go func(out chan<- string) {
-		time.Sleep(2 * time.Second)
-		fmt.Println("async operation ready, return comments")
-		out <- "32 комментария"
-	}(result)
-	return result
+func worker(id int, jobs <-chan int, results chan<- int) {
+	for job := range jobs {
+		fmt.Printf("Воркер %d начал задание %d\n", id, job)
+		time.Sleep(time.Second) // имитация работы
+		results <- job * 2
+		fmt.Printf("Воркер %d завершил задание %d\n", id, job)
+	}
 }
 
-func getPage() {
-	resultCh := getComments()
+// Прикладное применение каналов и горутин
+func main() {
+	jobs := make(chan int, 3)
+	results := make(chan int, 3)
 
-	time.Sleep(1 * time.Second)
-	fmt.Println("get related articles")
+	// Запуск 3 воркеров
+	for i := 1; i <= 3; i++ {
+		go worker(i, jobs, results)
+	}
 
-	commentsData := <-resultCh
-	fmt.Println("main goroutine: ", commentsData)
+	// Отправка 5 заданий
+	for i := 1; i <= 5; i++ {
+		jobs <- i
+		fmt.Printf("Задание %d отправлено\n", i)
+	}
+	close(jobs) // Закрыть канал после отправки
+
+	// Сбор результатов
+	for i := 1; i <= 5; i++ {
+		fmt.Printf("Результат: %d\n", <-results)
+	}
 }
