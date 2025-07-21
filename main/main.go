@@ -2,37 +2,29 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
-func worker(id int, jobs <-chan int, results chan<- int) {
-	for job := range jobs {
-		fmt.Printf("Воркер %d начал задание %d\n", id, job)
-		time.Sleep(time.Second) // имитация работы
-		results <- job * 2
-		fmt.Printf("Воркер %d завершил задание %d\n", id, job)
+func main() {
+	// Создаём WaitGroup
+	var wg sync.WaitGroup
+
+	// Запускаем 3 горутины
+	for i := 1; i <= 3; i++ {
+		wg.Add(1)         // Говорим WaitGroup: "Добавь одну задачу в ожидание"
+		go worker(i, &wg) // Запускаем горутину, передаём ей указатель на wg
 	}
+
+	fmt.Println("Главная горутина: Жду завершения всех горутин...")
+	wg.Wait() // Блокируем здесь, пока wg.Done() не будет вызван 3 раза
 }
 
-// Прикладное применение каналов и горутин
-func main() {
-	jobs := make(chan int, 3)
-	results := make(chan int, 3)
+// Функция, выполняемая в горутине (воркер)
+func worker(id int, wg *sync.WaitGroup) {
+	defer wg.Done() // Важно! Гарантирует, что wg.Done() вызовется при ЛЮБОМ выходе из функции
 
-	// Запуск 3 воркеров
-	for i := 1; i <= 3; i++ {
-		go worker(i, jobs, results)
-	}
-
-	// Отправка 5 заданий
-	for i := 1; i <= 5; i++ {
-		jobs <- i
-		fmt.Printf("Задание %d отправлено\n", i)
-	}
-	close(jobs) // Закрыть канал после отправки
-
-	// Сбор результатов
-	for i := 1; i <= 5; i++ {
-		fmt.Printf("Результат: %d\n", <-results)
-	}
+	fmt.Printf("Воркер &d: Начинаю работу...\n", id)
+	time.Sleep(time.Duration(id) * time.Second) // Имитация разной по времени работы
+	fmt.Printf("Воркер %d: Закончил работу\n", id)
 }
