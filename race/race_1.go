@@ -1,16 +1,29 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+var counter int // Общая переменная
 
 func main() {
-	var counters = map[int]int{}
-	for i := 0; i < 5; i++ {
-		go func(counters map[int]int, th int) {
-			for j := 0; j < 5; j++ {
-				counters[th*10+j]++
-			}
-		}(counters, i)
-	}
-	fmt.Scanln()
-	fmt.Println("counters result", counters)
+	fmt.Printf("Начальное значение: %d\n", counter)
+
+	go increment() // Горутина 1 (пишет)
+	go increment() // Горутина 2 (пишет)
+
+	// Даём горутинам время на выполнение
+	time.Sleep(1 * time.Second)
+
+	fmt.Printf("Конечное значение: %d\n", counter)
+}
+
+func increment() {
+	temp := counter // Чтение
+	temp++          // Изменение
+	counter = temp  // Запись
+
+	// Вывод внутри горутины для демонстрации  промежуточных состояний
+	fmt.Printf("-> Горутина изменила значение: %d\n", counter)
 }
